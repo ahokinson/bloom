@@ -1,0 +1,20 @@
+version: "3"
+
+tasks:
+  build:
+    deps: [tidy]
+    cmds:
+      - go build -o bin/bloom ./cmd/bloom
+
+  install:
+    deps: [build]
+    cmds:
+      - sudo ln -sf {{.ROOT_DIR}}/bin/bloom /usr/local/bin/bloom
+
+  tidy:
+    cmds:
+      - go mod tidy
+
+  clean:
+    cmds:
+      - rm -rf bin/
