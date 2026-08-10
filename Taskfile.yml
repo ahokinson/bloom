@@ -1,15 +1,33 @@
 version: "3"
 
+vars:
+  # Stamped into the binary so `bloom --version` reports something useful.
+  # `git describe` on a repo with no tags yields the sha.
+  VERSION:
+    sh: git describe --tags --always --dirty 2>/dev/null || echo dev
+
 tasks:
   build:
     deps: [tidy]
     cmds:
-      - go build -o bin/bloom ./cmd/bloom
+      - go build -ldflags "-X main.version={{.VERSION}}" -o bin/bloom ./cmd/bloom
 
-  install:
-    deps: [build]
+  test:
     cmds:
-      - sudo ln -sf {{.ROOT_DIR}}/bin/bloom /usr/local/bin/bloom
+      - go test ./...
+
+  # The session tests drive a real tmux on a private socket. They skip
+  # themselves where one cannot be started, so a green -short run is not
+  # evidence that tmux behaves as expected — `task test` is.
+  test:short:
+    cmds:
+      - go test -short ./...
+
+  check:
+    cmds:
+      - gofmt -l .
+      - go vet ./...
+      - task: test
 
   tidy:
     cmds:
